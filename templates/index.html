@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Jobaround — Global Resume Tailoring</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="nav">
+  <div class="brand"><span class="logo">🌐</span> Jobaround</div>
+  <a href="#how">How it works</a>
+  <a href="#tailor" class="navbtn">Tailor My Resume</a>
+</header>
+
+<main>
+<section class="hero">
+  <div>
+    <div class="eyebrow">GLOBAL CAREER TOOL</div>
+    <h1>Your Resume.<br><span>Any Country.</span><br>Ready to Apply.</h1>
+    <p>Upload your resume, choose your target country and job role, and Jobaround rewrites it for local hiring conventions.</p>
+    <a href="#tailor" class="primary">Tailor My Resume →</a>
+  </div>
+  <div class="hero-card">
+    <div class="card-top">AI RESUME LOCALIZATION</div>
+    <div class="fake-row"><b>🇺🇸 United States</b><span>ATS Ready</span></div>
+    <div class="fake-row"><b>🇬🇧 United Kingdom</b><span>Localized</span></div>
+    <div class="fake-row"><b>🇩🇪 Germany</b><span>Structured</span></div>
+    <div class="fake-row"><b>🇦🇺 Australia</b><span>Optimized</span></div>
+  </div>
+</section>
+
+<section id="how" class="steps">
+  <div><b>01</b><h3>Upload</h3><p>PDF, DOCX or TXT resume.</p></div>
+  <div><b>02</b><h3>Choose</h3><p>Country and target role.</p></div>
+  <div><b>03</b><h3>Tailor</h3><p>Open-source AI rewrites it.</p></div>
+  <div><b>04</b><h3>Download</h3><p>Get PDF and DOCX.</p></div>
+</section>
+
+<section id="tailor" class="tool">
+  <div class="section-title">
+    <div class="eyebrow">START HERE</div>
+    <h2>Tailor your resume</h2>
+    <p>No OpenAI key required. This version can use a local open-source model through Ollama.</p>
+  </div>
+
+  <form id="resumeForm">
+    <label>Resume</label>
+    <input type="file" name="resume" accept=".pdf,.docx,.txt" required>
+
+    <div class="grid">
+      <div>
+        <label>Target country</label>
+        <select name="country" required>
+          <option value="">Select country</option>
+          {% for country in countries %}
+          <option value="{{ country }}">{{ country }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Target job title</label>
+        <input name="job_title" placeholder="e.g. Senior DevOps Engineer">
+      </div>
+    </div>
+
+    <label>Job description (optional)</label>
+    <textarea name="job_description" rows="7" placeholder="Paste the job description here for more targeted tailoring..."></textarea>
+
+    <button class="primary full" type="submit">Tailor Resume with AI →</button>
+  </form>
+
+  <div id="status" class="status"></div>
+
+  <div id="result" class="result hidden">
+    <div class="result-head">
+      <h3>Your tailored resume</h3>
+      <div>
+        <a id="pdfLink" class="download" target="_blank">Download PDF</a>
+        <a id="docxLink" class="download" target="_blank">Download DOCX</a>
+      </div>
+    </div>
+    <pre id="preview"></pre>
+  </div>
+</section>
+</main>
+
+<footer>© 2026 Jobaround · Built for global job seekers</footer>
+<script src="/static/app.js"></script>
+</body>
+</html>
