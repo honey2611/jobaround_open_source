@@ -2,7 +2,9 @@ import os
 import re
 import json
 import requests
+from pathlib import Path
 from flask import Flask, render_template, request, send_file, jsonify
+from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.utils import secure_filename
 from docx import Document
 from PyPDF2 import PdfReader
@@ -203,6 +205,10 @@ def escape_html(s):
          .replace("<", "&lt;")
          .replace(">", "&gt;")
     )
+
+@app.errorhandler(RequestEntityTooLarge)
+def file_too_large(_error):
+    return jsonify({"error": "File is too large. Maximum size is 8 MB."}), 413
 
 @app.route("/")
 def index():

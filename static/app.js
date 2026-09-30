@@ -17,7 +17,13 @@ form.addEventListener("submit", async (e) => {
       body: new FormData(form)
     });
 
-    const data = await response.json();
+    const raw = await response.text();
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      throw new Error("The server could not process the upload. Try a text-based PDF, DOCX, or TXT under 8 MB.");
+    }
 
     if (!response.ok) throw new Error(data.error || "Something went wrong.");
 
