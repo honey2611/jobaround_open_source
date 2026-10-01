@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ country.name }} resume guide — Jobaround{% endblock %}
+{% block title %}{{ country.name }} resume guide — JOB AROUND{% endblock %}
 {% block content %}
 <section class="page-hero">
   <div class="eyebrow"><span class="dot"></span> Country guide</div>
@@ -9,7 +9,7 @@
 </section>
 <section class="section tight prose">
   <article class="card">
-    <h2>What Jobaround changes</h2>
+    <h2>What JOB AROUND changes</h2>
     <p>{{ country.guidance }}</p>
     <p>Photo guidance: {% if country.photo == "omit" %}leave it off.{% elif country.photo == "common" %}a photo is culturally common, and this tool will not require one.{% else %}optional. A photo is not added unless your file already contains that information as text.{% endif %}</p>
     <p>The rewrite can only use text extracted from your upload. It will not add employers, dates, degrees, or metrics.</p>

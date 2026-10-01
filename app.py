@@ -153,7 +153,7 @@ def fallback_tailor(resume, country, job_title, job_description):
 def tailor_with_ollama(resume, country, job_title, job_description):
     guidance = COUNTRY_GUIDANCE.get(country, "Use the country's common professional resume conventions while avoiding unsupported assumptions.")
     prompt = f"""
-You are Jobaround, a professional resume localization assistant.
+You are the resume assistant for JOB AROUND.
 
 TASK:
 Rewrite the user's resume for a job application in {country}.
@@ -330,8 +330,8 @@ def faq_page():
 
 @app.get("/about")
 def about_page():
-    return render_template("page.html", title="About Jobaround", kicker="Company", paragraphs=[
-        "Jobaround rewrites a resume for the country you are applying in. It changes structure, tone, and which personal details to leave off. It does not invent employers, dates, or skills.",
+    return render_template("page.html", title="About JOB AROUND", kicker="Company", paragraphs=[
+        "JOB AROUND rewrites a resume for the country you are applying in. It changes structure, tone, and which personal details to leave off. It does not invent employers, dates, or skills.",
         "The site is a Flask app. When an Ollama server is configured, that model writes the draft. If it is unreachable, you still get a PDF and DOCX built from your original text.",
     ])
 
@@ -352,7 +352,7 @@ def press_page():
 def privacy_page():
     return render_template("page.html", title="Privacy Policy", kicker="Legal", paragraphs=[
         "The uploaded resume is read for text and then deleted from the upload folder. The generated PDF and DOCX remain on the server so your download links keep working.",
-        "If you are signed in, Jobaround stores your name, email, a password hash, and a short preview of each tailored resume in a local database.",
+        "If you are signed in, JOB AROUND stores your name, email, a password hash, and a short preview of each tailored resume in a local database.",
         "Contact messages are stored the same way. This app does not sell that information. A session cookie is used only to keep you signed in.",
     ])
 
@@ -360,14 +360,14 @@ def privacy_page():
 def terms_page():
     return render_template("page.html", title="Terms of Use", kicker="Legal", paragraphs=[
         "Upload only resumes you have the right to process. You are responsible for checking the result before you send it to an employer.",
-        "Jobaround does not promise interviews, offers, or that a generated file meets every local legal requirement.",
+        "JOB AROUND does not promise interviews, offers, or that a generated file meets every local legal requirement.",
         "The service is free to use. A country note is guidance, not legal advice.",
     ])
 
 @app.get("/cookies")
 def cookies_page():
     return render_template("page.html", title="Cookie Policy", kicker="Legal", paragraphs=[
-        "Jobaround sets one session cookie so sign-in and the upload form can stay on the same visit.",
+        "JOB AROUND sets one session cookie so sign-in and the upload form can stay on the same visit.",
         "The cookie is not used for advertising. Clearing it signs you out.",
     ])
 

@@ -87,7 +87,7 @@ BLOG_POSTS = [
         "paragraphs": [
             "A resume that reads well in one market can look unfinished in another. The usual differences are length, photo, date of birth, spelling, and how strongly you are expected to sell your results.",
             "Start with the facts you already have. Reorder them so the most relevant role is easy to see, and use the spelling of the country you are applying in. Do not add a degree, a tool, or a metric that is not in your history.",
-            "Jobaround applies those country notes to the text it can actually read from your file. If a detail is missing from the upload, it stays missing.",
+            "JOB AROUND applies those country notes to the text it can actually read from your file. If a detail is missing from the upload, it stays missing.",
         ],
     },
     {
@@ -98,7 +98,7 @@ BLOG_POSTS = [
         "paragraphs": [
             "An applicant tracking system stores the text it can extract. Tables, sidebars, and graphics often come through out of order or not at all.",
             "Use standard headings such as Experience, Education, and Skills. Put dates on the same line as the role, and write bullets as sentences a person can read aloud.",
-            "Jobaround exports a simple PDF and DOCX for that reason. The preview you see is the same text that goes into the file.",
+            "JOB AROUND exports a simple PDF and DOCX for that reason. The preview you see is the same text that goes into the file.",
         ],
     },
     {
@@ -109,7 +109,7 @@ BLOG_POSTS = [
         "paragraphs": [
             "In the United States, Canada, the United Kingdom, and Australia, recruiters usually do not want a photo, date of birth, or marital status on a resume.",
             "Some European and Gulf markets still see a photo on CVs. That does not mean you should add one if your file does not already include it, and it does not mean a photo is a requirement.",
-            "When you are unsure, keep the document to contact details, work, education, and skills. Jobaround follows that rule unless the country note says a photo is culturally common.",
+            "When you are unsure, keep the document to contact details, work, education, and skills. JOB AROUND follows that rule unless the country note says a photo is culturally common.",
         ],
     },
     {
@@ -120,7 +120,7 @@ BLOG_POSTS = [
         "paragraphs": [
             "Strong bullets name the work and the outcome: what changed, for whom, and by how much. If the original resume has no number, do not invent one for the new country.",
             "Action verbs help when they match the work. 'Led' is not a synonym for 'helped with'. The rewrite should stay inside the original responsibility.",
-            "Paste the job description when you have it. Jobaround can emphasize overlapping skills, and it is instructed not to claim a keyword you never used.",
+            "Paste the job description when you have it. JOB AROUND can emphasize overlapping skills, and it is instructed not to claim a keyword you never used.",
         ],
     },
 ]
