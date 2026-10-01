@@ -14,6 +14,7 @@
   </div>
 </section>
 <section class="section tight">
+  {% if notice %}<div class="status warning">{{ notice }}</div>{% endif %}
   {% if history %}
   <div class="history">
     {% for item in history %}
@@ -34,5 +35,16 @@
   {% else %}
   <article class="card"><p>No tailored resumes yet. Your next upload will show up here.</p></article>
   {% endif %}
+  <article class="card delete-box">
+    <h2>Delete account</h2>
+    <p>Once you request deletion, the account is kept for 7 days and then deleted. Sign in again during those 7 days to recover it. After 7 days it is deleted permanently and cannot be restored.</p>
+    {% if account_error %}<div class="status error">{{ account_error }}</div>{% endif %}
+    <form method="post" action="/account/delete">
+      <input type="hidden" name="csrf" value="{{ csrf_token }}">
+      <label for="password">Confirm with your password</label>
+      <input id="password" name="password" type="password" required>
+      <button class="btn full" type="submit">Delete my account</button>
+    </form>
+  </article>
 </section>
 {% endblock %}

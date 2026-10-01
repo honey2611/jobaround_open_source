@@ -3,7 +3,7 @@ import re
 import json
 import secrets
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import requests
 from pathlib import Path
 from flask import Flask, render_template, request, send_file, jsonify, session, redirect, url_for, abort
@@ -71,11 +71,47 @@ def init_db():
                 created_at TEXT NOT NULL
             );
         """)
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(users)")}
+        if "delete_after" not in columns:
+            conn.execute("ALTER TABLE users ADD COLUMN delete_after TEXT")
         conn.commit()
     finally:
         conn.close()
 
 init_db()
+
+def utcnow():
+    return datetime.now(timezone.utc)
+
+def purge_expired_accounts():
+    conn = db()
+    try:
+        rows = conn.execute(
+            "SELECT id FROM users WHERE delete_after IS NOT NULL AND delete_after <= ?",
+            (utcnow().isoformat(),),
+        ).fetchall()
+        for row in rows:
+            remove_user(conn, row["id"])
+        if rows:
+            conn.commit()
+    finally:
+        conn.close()
+
+def remove_user(conn, user_id):
+    files = conn.execute(
+        "SELECT pdf_name, docx_name FROM resumes WHERE user_id = ?",
+        (user_id,),
+    ).fetchall()
+    for item in files:
+        for name in (item["pdf_name"], item["docx_name"]):
+            if not name:
+                continue
+            try:
+                os.remove(os.path.join(OUTPUT_DIR, name))
+            except OSError:
+                pass
+    conn.execute("DELETE FROM resumes WHERE user_id = ?", (user_id,))
+    conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
 
 def now():
     return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
@@ -95,14 +131,30 @@ def current_user():
         return None
     conn = db()
     try:
-        row = conn.execute("SELECT id, name, email, created_at FROM users WHERE id = ?", (uid,)).fetchone()
-        return dict(row) if row else None
+        row = conn.execute(
+            "SELECT id, name, email, created_at, delete_after FROM users WHERE id = ?",
+            (uid,),
+        ).fetchone()
+        if not row:
+            session.pop("user_id", None)
+            return None
+        if row["delete_after"] and datetime.fromisoformat(row["delete_after"]) <= utcnow():
+            remove_user(conn, row["id"])
+            conn.commit()
+            session.pop("user_id", None)
+            return None
+        return dict(row)
     finally:
         conn.close()
 
 @app.context_processor
 def inject_user():
-    return {"user": current_user(), "csrf_token": csrf_token(), "year": 2026}
+    return {
+        "user": current_user(),
+        "csrf_token": csrf_token(),
+        "year": 2026,
+        "notice": session.pop("notice", None),
+    }
 
 def extract_text(path):
     ext = Path(path).suffix.lower()
@@ -405,6 +457,7 @@ def signin_page():
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup_page():
+    purge_expired_accounts()
     if current_user():
         return redirect(url_for("account_page"))
     return auth_form("signup")
@@ -431,18 +484,38 @@ def auth_form(mode):
                             )
                             conn.commit()
                         except sqlite3.IntegrityError:
-                            error = "An account with that email already exists."
+                            pending = conn.execute(
+                                "SELECT delete_after FROM users WHERE email = ?",
+                                (email,),
+                            ).fetchone()
+                            if pending and pending["delete_after"]:
+                                error = "This email is scheduled for deletion. Sign in before the 7 days end to keep the account."
+                            else:
+                                error = "An account with that email already exists."
                         else:
                             row = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
                             session["user_id"] = row["id"]
                             return redirect(url_for("account_page"))
                 else:
-                    row = conn.execute("SELECT id, password_hash FROM users WHERE email = ?", (email,)).fetchone()
+                    row = conn.execute(
+                        "SELECT id, password_hash, delete_after FROM users WHERE email = ?",
+                        (email,),
+                    ).fetchone()
                     if not row or not check_password_hash(row["password_hash"], password):
                         error = "Email or password is incorrect."
                     else:
-                        session["user_id"] = row["id"]
-                        return redirect(url_for("account_page"))
+                        deadline = datetime.fromisoformat(row["delete_after"]) if row["delete_after"] else None
+                        if deadline and deadline <= utcnow():
+                            remove_user(conn, row["id"])
+                            conn.commit()
+                            error = "This account was permanently deleted after 7 days and cannot be restored."
+                        else:
+                            if deadline:
+                                conn.execute("UPDATE users SET delete_after = NULL WHERE id = ?", (row["id"],))
+                                conn.commit()
+                                session["notice"] = "Your account is active again. Signing in cancelled the deletion, so it will not be removed."
+                            session["user_id"] = row["id"]
+                            return redirect(url_for("account_page"))
             finally:
                 conn.close()
     return render_template("auth.html", mode=mode, error=error)
@@ -473,7 +546,36 @@ def account_page():
         item["pdf_ok"] = os.path.exists(os.path.join(OUTPUT_DIR, item["pdf_name"] or ""))
         item["docx_ok"] = os.path.exists(os.path.join(OUTPUT_DIR, item["docx_name"] or ""))
         history.append(item)
-    return render_template("account.html", history=history)
+    return render_template("account.html", history=history, account_error=session.pop("account_error", None))
+
+@app.post("/account/delete")
+def delete_account():
+    user = current_user()
+    if not user:
+        return redirect(url_for("signin_page"))
+    if not csrf_ok():
+        session["account_error"] = "Refresh the page and try again."
+        return redirect(url_for("account_page"))
+    password = request.form.get("password", "")
+    conn = db()
+    try:
+        row = conn.execute("SELECT password_hash FROM users WHERE id = ?", (user["id"],)).fetchone()
+        if not row or not check_password_hash(row["password_hash"], password):
+            session["account_error"] = "Password is incorrect, so the account was not scheduled for deletion."
+            return redirect(url_for("account_page"))
+        deadline = utcnow() + timedelta(days=7)
+        conn.execute("UPDATE users SET delete_after = ? WHERE id = ?", (deadline.isoformat(), user["id"]))
+        conn.commit()
+    finally:
+        conn.close()
+    session.pop("user_id", None)
+    when = deadline.strftime("%d %b %Y")
+    session["notice"] = (
+        f"Your account will be deleted after 7 days, on {when}. "
+        "You can recover it until then by signing in again. "
+        "After that date it is deleted permanently and cannot be restored."
+    )
+    return redirect(url_for("signin_page"))
 
 @app.post("/api/tailor")
 def tailor():

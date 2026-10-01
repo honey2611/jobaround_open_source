@@ -1,25 +1,29 @@
 {% extends "base.html" %}
 {% block title %}{% if mode == "signup" %}Create account{% else %}Sign in{% endif %} — JOB AROUND{% endblock %}
 {% block content %}
-<section class="page-hero narrow">
-  <div class="eyebrow"><span class="dot"></span> Account</div>
-  <h1>{% if mode == "signup" %}Create your account{% else %}Sign in{% endif %}</h1>
-  <p>History is optional. You can tailor a resume without an account.</p>
-</section>
-<section class="tool">
-  <form class="card form-card" method="post">
+<section class="auth-wrap">
+  <h1>{% if mode == "signup" %}Create an account{% else %}Sign in{% endif %}</h1>
+  <p class="lede">{% if mode == "signup" %}Save your tailored resumes in one place.{% else %}Back to where you left off.{% endif %}</p>
+  {% if notice %}<div class="status warning">{{ notice }}</div>{% endif %}
+  <form method="post">
     <input type="hidden" name="csrf" value="{{ csrf_token }}">
     {% if error %}<div class="status error">{{ error }}</div>{% endif %}
     {% if mode == "signup" %}
     <label for="name">Name</label>
-    <input id="name" name="name" required>
+    <input id="name" name="name" placeholder="Your name" required>
     {% endif %}
     <label for="email">Email</label>
-    <input id="email" name="email" type="email" required>
-    <label for="password">Password</label>
-    <input id="password" name="password" type="password" minlength="8" required>
+    <input id="email" name="email" type="email" placeholder="you@email.com" required>
+    <div class="label-row">
+      <label for="password">Password</label>
+      {% if mode == "signin" %}<a href="/contact">Forgot it?</a>{% endif %}
+    </div>
+    <div class="pass-wrap">
+      <input id="password" name="password" type="password" minlength="8" placeholder="Your password" required>
+      <button class="eye" type="button" data-toggle-password="password" aria-label="Show password">◉</button>
+    </div>
     <button class="btn full" type="submit">{% if mode == "signup" %}Create account{% else %}Sign in{% endif %}</button>
-    <p class="switch">
+    <p class="auth-split">
       {% if mode == "signup" %}
       Already have an account? <a href="/signin">Sign in</a>
       {% else %}

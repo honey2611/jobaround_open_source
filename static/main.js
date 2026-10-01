@@ -32,6 +32,38 @@ if (reduceMotion) {
   revealNodes.forEach((node) => watcher.observe(node));
 }
 
+document.querySelectorAll("[data-toggle-password]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const input = document.getElementById(button.getAttribute("data-toggle-password"));
+    if (!input) return;
+    const show = input.type === "password";
+    input.type = show ? "text" : "password";
+    button.setAttribute("aria-label", show ? "Hide password" : "Show password");
+  });
+});
+
+const flagBank = [...document.querySelectorAll(".flag-bank svg")];
+const flagTiles = [...document.querySelectorAll(".flag-tile")];
+if (flagBank.length && flagTiles.length) {
+  const cursor = flagTiles.map((_, index) => index);
+  const showFlag = (tile, index) => {
+    tile.replaceChildren(flagBank[index].cloneNode(true));
+  };
+  flagTiles.forEach((tile, index) => showFlag(tile, cursor[index]));
+  let turn = 0;
+  window.setInterval(() => {
+    const slot = turn % flagTiles.length;
+    const tile = flagTiles[slot];
+    cursor[slot] = (cursor[slot] + flagTiles.length) % flagBank.length;
+    tile.classList.add("swap");
+    window.setTimeout(() => {
+      showFlag(tile, cursor[slot]);
+      tile.classList.remove("swap");
+    }, 320);
+    turn += 1;
+  }, 1600);
+}
+
 const file = document.getElementById("resume");
 const fileLabel = document.getElementById("fileLabel");
 const dropzone = document.getElementById("dropzone");

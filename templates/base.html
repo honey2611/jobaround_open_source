@@ -15,7 +15,6 @@
 <body>
 <header class="nav" id="nav">
   <a class="brand" href="/" aria-label="JobAround.in">
-    <img class="brand-mark" src="/static/logo.png" alt="">
     <img class="brand-word" src="/static/wordmark.png" alt="JobAround.in">
   </a>
   <button class="menu" type="button" aria-label="Open menu" aria-expanded="false">
@@ -28,10 +27,11 @@
     <a href="/blog">Blog</a>
     {% if user %}
     <a href="/account">{{ user.name }}</a>
-    {% else %}
-    <a href="/signin">Sign In</a>
-    {% endif %}
     <a class="btn btn-sm" href="/tailor">Get Started</a>
+    {% else %}
+    <a href="/signin">Sign in</a>
+    <a class="btn btn-sm" href="/signup">Start free</a>
+    {% endif %}
   </nav>
 </header>
 
@@ -42,7 +42,7 @@
 <footer class="site-footer">
   <div class="footer-grid">
     <div>
-      <a class="brand" href="/" aria-label="JobAround.in"><img class="brand-mark" src="/static/logo.png" alt=""><img class="brand-word" src="/static/wordmark.png" alt="JobAround.in"></a>
+      <a class="brand" href="/" aria-label="JobAround.in"><img class="brand-word" src="/static/wordmark.png" alt="JobAround.in"></a>
       <p>Land your dream job anywhere in the world with AI-tailored resumes.</p>
       <div class="socials">
         <a href="/contact" aria-label="Contact via message">𝕏</a>
