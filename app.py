@@ -1,20 +1,28 @@
 import os
 import re
 import json
+import secrets
+import sqlite3
+from datetime import datetime, timezone
 import requests
 from pathlib import Path
-from flask import Flask, render_template, request, send_file, jsonify
+from flask import Flask, render_template, request, send_file, jsonify, session, redirect, url_for, abort
 from werkzeug.exceptions import RequestEntityTooLarge
+from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 from docx import Document
 from PyPDF2 import PdfReader
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.enums import TA_LEFT
+from content import BLOG_POSTS, BY_NAME, BY_SLUG, COUNTRIES, COUNTRY_GUIDANCE, FAQS, FEATURED, POSTS_BY_SLUG
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "jobaround-dev-secret-change-me")
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = os.getenv("COOKIE_SECURE", "0") == "1"
 
 UPLOAD_DIR = "uploads"
 OUTPUT_DIR = "outputs"
@@ -25,22 +33,76 @@ OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
 
 ALLOWED = {"pdf", "docx", "txt"}
+DB_PATH = os.path.join("data", "jobaround.db")
 
-COUNTRY_GUIDANCE = {
-    "United States": "Use concise achievement-focused language, strong action verbs, measurable impact, ATS-friendly formatting, and normally omit photo, date of birth, marital status and full street address.",
-    "Canada": "Use a clear achievement-focused resume, Canadian spelling where appropriate, concise sections, and normally omit photo, age, marital status and other personal details.",
-    "United Kingdom": "Use a concise CV style, achievement-oriented bullets, UK spelling where appropriate, and normally omit photo, date of birth, marital status and nationality unless specifically relevant.",
-    "Germany": "Use a structured CV with clear chronology, qualifications and professional detail. Keep formatting conservative. A photo can be culturally common but should not be required.",
-    "France": "Use a structured CV with clear professional summary, skills, education and experience. Keep language formal and concise.",
-    "Netherlands": "Use a concise, direct CV emphasizing relevant achievements, skills and experience. Avoid unnecessary personal information.",
-    "Sweden": "Use a clean, concise and achievement-oriented CV with clear skills and experience. Keep personal information limited.",
-    "Switzerland": "Use a structured, detailed and professional CV, with clear dates, qualifications and language skills where relevant.",
-    "Australia": "Use an achievement-focused resume with Australian spelling where appropriate. Normally omit photo, age, marital status and other unnecessary personal details.",
-    "UAE": "Use a clear professional CV emphasizing experience, qualifications, skills and relevant international experience. Personal details should only be included when genuinely useful for the role.",
-    "Singapore": "Use a concise, structured resume emphasizing relevant achievements, skills and qualifications. Keep personal information limited.",
-    "Japan": "Use a clear, formal and highly structured resume. Japanese applications may use standardized formats, but for international/English roles a concise English resume is appropriate.",
-    "India": "Use a concise, ATS-friendly resume with measurable achievements, relevant skills, education and professional experience.",
-}
+def db():
+    os.makedirs("data", exist_ok=True)
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    conn = db()
+    try:
+        conn.executescript("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS resumes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                country TEXT NOT NULL,
+                job_title TEXT,
+                preview TEXT,
+                pdf_name TEXT,
+                docx_name TEXT,
+                ai_used INTEGER NOT NULL,
+                created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                email TEXT NOT NULL,
+                body TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+        """)
+        conn.commit()
+    finally:
+        conn.close()
+
+init_db()
+
+def now():
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+def csrf_token():
+    if "csrf" not in session:
+        session["csrf"] = secrets.token_hex(16)
+    return session["csrf"]
+
+def csrf_ok():
+    token = request.form.get("csrf", "")
+    return token and token == session.get("csrf")
+
+def current_user():
+    uid = session.get("user_id")
+    if not uid:
+        return None
+    conn = db()
+    try:
+        row = conn.execute("SELECT id, name, email, created_at FROM users WHERE id = ?", (uid,)).fetchone()
+        return dict(row) if row else None
+    finally:
+        conn.close()
+
+@app.context_processor
+def inject_user():
+    return {"user": current_user(), "csrf_token": csrf_token(), "year": 2026}
 
 def extract_text(path):
     ext = Path(path).suffix.lower()
@@ -208,14 +270,215 @@ def escape_html(s):
 
 @app.errorhandler(RequestEntityTooLarge)
 def file_too_large(_error):
-    return jsonify({"error": "File is too large. Maximum size is 8 MB."}), 413
+    if request.path.startswith("/api/"):
+        return jsonify({"error": "File is too large. Maximum size is 8 MB."}), 413
+    return render_template("page.html", title="File too large", kicker="Upload", paragraphs=["Maximum file size is 8 MB."]), 413
+
+@app.errorhandler(404)
+def not_found(_error):
+    if request.path.startswith("/api/"):
+        return jsonify({"error": "Not found."}), 404
+    return render_template("page.html", title="Page not found", kicker="404", paragraphs=["That page is not on this site."]), 404
+
+def featured_countries():
+    return [BY_NAME[name] for name in FEATURED]
 
 @app.route("/")
 def index():
-    return render_template("index.html", countries=sorted(COUNTRY_GUIDANCE))
+    return render_template("index.html", featured=featured_countries(), country_count=len(COUNTRIES))
+
+@app.get("/tailor")
+def tailor_page():
+    selected = request.args.get("country", "")
+    if selected not in COUNTRY_GUIDANCE:
+        selected = ""
+    return render_template("tailor.html", countries=sorted(COUNTRIES, key=lambda c: c["name"]), selected=selected)
+
+@app.get("/countries")
+def countries_page():
+    return render_template("countries.html", countries=sorted(COUNTRIES, key=lambda c: c["name"]))
+
+@app.get("/countries/<slug>")
+def country_page(slug):
+    country = BY_SLUG.get(slug)
+    if not country:
+        abort(404)
+    return render_template("country.html", country=country)
+
+@app.get("/blog")
+def blog_page():
+    return render_template("blog.html", posts=BLOG_POSTS)
+
+@app.get("/blog/<slug>")
+def blog_post(slug):
+    post = POSTS_BY_SLUG.get(slug)
+    if not post:
+        abort(404)
+    return render_template("post.html", post=post)
+
+@app.get("/how-it-works")
+def how_page():
+    return render_template("how.html")
+
+@app.get("/pricing")
+def pricing_page():
+    return render_template("pricing.html")
+
+@app.get("/faq")
+def faq_page():
+    return render_template("faq.html", faqs=FAQS)
+
+@app.get("/about")
+def about_page():
+    return render_template("page.html", title="About Jobaround", kicker="Company", paragraphs=[
+        "Jobaround rewrites a resume for the country you are applying in. It changes structure, tone, and which personal details to leave off. It does not invent employers, dates, or skills.",
+        "The site is a Flask app. When an Ollama server is configured, that model writes the draft. If it is unreachable, you still get a PDF and DOCX built from your original text.",
+    ])
+
+@app.get("/careers")
+def careers_page():
+    return render_template("page.html", title="Careers", kicker="Company", paragraphs=[
+        "There are no open roles right now.",
+        "If you want to talk about the project, use the contact form.",
+    ])
+
+@app.get("/press")
+def press_page():
+    return render_template("page.html", title="Press", kicker="Company", paragraphs=[
+        "For a product question or a press note, use the contact form.",
+    ])
+
+@app.get("/privacy")
+def privacy_page():
+    return render_template("page.html", title="Privacy Policy", kicker="Legal", paragraphs=[
+        "The uploaded resume is read for text and then deleted from the upload folder. The generated PDF and DOCX remain on the server so your download links keep working.",
+        "If you are signed in, Jobaround stores your name, email, a password hash, and a short preview of each tailored resume in a local database.",
+        "Contact messages are stored the same way. This app does not sell that information. A session cookie is used only to keep you signed in.",
+    ])
+
+@app.get("/terms")
+def terms_page():
+    return render_template("page.html", title="Terms of Use", kicker="Legal", paragraphs=[
+        "Upload only resumes you have the right to process. You are responsible for checking the result before you send it to an employer.",
+        "Jobaround does not promise interviews, offers, or that a generated file meets every local legal requirement.",
+        "The service is free to use. A country note is guidance, not legal advice.",
+    ])
+
+@app.get("/cookies")
+def cookies_page():
+    return render_template("page.html", title="Cookie Policy", kicker="Legal", paragraphs=[
+        "Jobaround sets one session cookie so sign-in and the upload form can stay on the same visit.",
+        "The cookie is not used for advertising. Clearing it signs you out.",
+    ])
+
+@app.route("/contact", methods=["GET", "POST"])
+def contact_page():
+    error = None
+    sent = False
+    if request.method == "POST":
+        if not csrf_ok():
+            error = "Refresh the page and try again."
+        else:
+            name = request.form.get("name", "").strip()[:80]
+            email = request.form.get("email", "").strip().lower()[:120]
+            body = request.form.get("body", "").strip()[:4000]
+            if not name or not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email) or len(body) < 10:
+                error = "Add your name, a valid email, and a message of at least 10 characters."
+            else:
+                conn = db()
+                try:
+                    conn.execute(
+                        "INSERT INTO messages (name, email, body, created_at) VALUES (?, ?, ?, ?)",
+                        (name, email, body, now()),
+                    )
+                    conn.commit()
+                    sent = True
+                finally:
+                    conn.close()
+    return render_template("contact.html", error=error, sent=sent)
+
+@app.route("/signin", methods=["GET", "POST"])
+def signin_page():
+    if current_user():
+        return redirect(url_for("account_page"))
+    return auth_form("signin")
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup_page():
+    if current_user():
+        return redirect(url_for("account_page"))
+    return auth_form("signup")
+
+def auth_form(mode):
+    error = None
+    if request.method == "POST":
+        if not csrf_ok():
+            error = "Refresh the page and try again."
+        else:
+            email = request.form.get("email", "").strip().lower()
+            password = request.form.get("password", "")
+            conn = db()
+            try:
+                if mode == "signup":
+                    name = request.form.get("name", "").strip()[:80]
+                    if len(name) < 2 or not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email) or len(password) < 8:
+                        error = "Use your name, a valid email, and a password of at least 8 characters."
+                    else:
+                        try:
+                            conn.execute(
+                                "INSERT INTO users (name, email, password_hash, created_at) VALUES (?, ?, ?, ?)",
+                                (name, email, generate_password_hash(password), now()),
+                            )
+                            conn.commit()
+                        except sqlite3.IntegrityError:
+                            error = "An account with that email already exists."
+                        else:
+                            row = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+                            session["user_id"] = row["id"]
+                            return redirect(url_for("account_page"))
+                else:
+                    row = conn.execute("SELECT id, password_hash FROM users WHERE email = ?", (email,)).fetchone()
+                    if not row or not check_password_hash(row["password_hash"], password):
+                        error = "Email or password is incorrect."
+                    else:
+                        session["user_id"] = row["id"]
+                        return redirect(url_for("account_page"))
+            finally:
+                conn.close()
+    return render_template("auth.html", mode=mode, error=error)
+
+@app.post("/logout")
+def logout():
+    if csrf_ok():
+        session.pop("user_id", None)
+    return redirect(url_for("index"))
+
+@app.get("/account")
+def account_page():
+    user = current_user()
+    if not user:
+        return redirect(url_for("signin_page"))
+    conn = db()
+    try:
+        rows = conn.execute(
+            "SELECT country, job_title, preview, pdf_name, docx_name, ai_used, created_at FROM resumes WHERE user_id = ? ORDER BY id DESC LIMIT 20",
+            (user["id"],),
+        ).fetchall()
+    finally:
+        conn.close()
+    history = []
+    for row in rows:
+        item = dict(row)
+        item["flag"] = BY_NAME.get(item["country"], {}).get("flag", "")
+        item["pdf_ok"] = os.path.exists(os.path.join(OUTPUT_DIR, item["pdf_name"] or ""))
+        item["docx_ok"] = os.path.exists(os.path.join(OUTPUT_DIR, item["docx_name"] or ""))
+        history.append(item)
+    return render_template("account.html", history=history)
 
 @app.post("/api/tailor")
 def tailor():
+    if not csrf_ok():
+        return jsonify({"error": "Your session expired. Refresh the page and try again."}), 400
     uploaded = request.files.get("resume")
     country = request.form.get("country", "").strip()
     job_title = request.form.get("job_title", "").strip()
@@ -230,11 +493,11 @@ def tailor():
     if ext not in ALLOWED:
         return jsonify({"error": "Upload PDF, DOCX or TXT only."}), 400
 
-    safe = secure_filename(uploaded.filename)
-    input_path = os.path.join(UPLOAD_DIR, safe)
-    uploaded.save(input_path)
+    safe = secure_filename(uploaded.filename) or "resume.txt"
+    input_path = os.path.join(UPLOAD_DIR, f"{secrets.token_hex(4)}_{safe}")
 
     try:
+        uploaded.save(input_path)
         resume = clean_text(extract_text(input_path))
         if len(resume) < 50:
             return jsonify({"error": "Could not extract enough text from the resume. Try a text-based PDF or DOCX."}), 400
@@ -246,19 +509,31 @@ def tailor():
             used_ai = False
             tailored = fallback_tailor(resume, country, job_title, job_description)
 
-        stem = Path(safe).stem
-        docx_path = os.path.join(OUTPUT_DIR, f"{stem}_jobaround.docx")
-        pdf_path = os.path.join(OUTPUT_DIR, f"{stem}_jobaround.pdf")
+        stem = f"{secrets.token_hex(3)}_{Path(safe).stem}"[:48]
+        docx_name = f"{stem}_jobaround.docx"
+        pdf_name = f"{stem}_jobaround.pdf"
+        docx_path = os.path.join(OUTPUT_DIR, docx_name)
+        pdf_path = os.path.join(OUTPUT_DIR, pdf_name)
         make_docx(tailored, docx_path)
         make_pdf(tailored, pdf_path)
+        if session.get("user_id"):
+            conn = db()
+            try:
+                conn.execute(
+                    "INSERT INTO resumes (user_id, country, job_title, preview, pdf_name, docx_name, ai_used, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (session["user_id"], country, job_title, tailored[:4000], pdf_name, docx_name, int(used_ai), now()),
+                )
+                conn.commit()
+            finally:
+                conn.close()
 
         return jsonify({
             "success": True,
             "ai_used": used_ai,
             "message": "Resume tailored successfully." if used_ai else "Resume processed using fallback mode because the local AI service was unavailable.",
             "preview": tailored,
-            "docx": f"/download/docx/{Path(docx_path).name}",
-            "pdf": f"/download/pdf/{Path(pdf_path).name}"
+            "docx": f"/download/docx/{docx_name}",
+            "pdf": f"/download/pdf/{pdf_name}"
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500

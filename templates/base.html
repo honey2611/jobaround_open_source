@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}Jobaround{% endblock %}</title>
+  <meta name="description" content="Upload a resume, pick a country, and download a tailored PDF or DOCX.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <script>document.documentElement.classList.add("js")</script>
+</head>
+<body>
+<header class="nav" id="nav">
+  <a class="brand" href="/">
+    <span class="mark" aria-hidden="true">
+      <svg viewBox="0 0 36 36" width="28" height="28">
+        <circle cx="16" cy="16" r="10" fill="none" stroke="url(#g)" stroke-width="1.6"/>
+        <ellipse cx="16" cy="16" rx="5" ry="10" fill="none" stroke="url(#g)" stroke-width="1.3"/>
+        <path d="M6 16h20M8 11h16M8 21h16" fill="none" stroke="url(#g)" stroke-width="1.1"/>
+        <path d="M23 7c0-2.2 1.6-3.4 2.6-4.4.3 1.2.8 2 1.6 2.6 1.2.8 1.8 2 1.8 3.2 0 2.2-1.8 3.8-3.8 3.8S23 9.2 23 7z" fill="#22d3ee"/>
+        <rect x="20" y="20" width="12" height="13" rx="2" fill="#120a2e" stroke="#c4b5fd" stroke-width="1.2"/>
+        <path d="M23 25h6M23 28h4" stroke="#22d3ee" stroke-width="1.2"/>
+        <defs>
+          <linearGradient id="g" x1="0" y1="0" x2="36" y2="36">
+            <stop stop-color="#c4b5fd"/><stop offset="1" stop-color="#22d3ee"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </span>
+    Jobaround
+  </a>
+  <button class="menu" type="button" aria-label="Open menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <nav class="links" id="links">
+    <a href="/#features">Features</a>
+    <a href="/#countries">Countries</a>
+    <a href="/#how">How It Works</a>
+    <a href="/blog">Blog</a>
+    {% if user %}
+    <a href="/account">{{ user.name }}</a>
+    {% else %}
+    <a href="/signin">Sign In</a>
+    {% endif %}
+    <a class="btn btn-sm" href="/tailor">Get Started</a>
+  </nav>
+</header>
+
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div>
+      <a class="brand" href="/">Jobaround</a>
+      <p>Land your dream job anywhere in the world with AI-tailored resumes.</p>
+      <div class="socials">
+        <a href="/contact" aria-label="Contact via message">𝕏</a>
+        <a href="/contact" aria-label="Contact">in</a>
+        <a href="/contact" aria-label="Contact form">◎</a>
+      </div>
+    </div>
+    <div>
+      <h4>Product</h4>
+      <a href="/#features">Features</a>
+      <a href="/how-it-works">How It Works</a>
+      <a href="/countries">Countries</a>
+      <a href="/pricing">Pricing</a>
+    </div>
+    <div>
+      <h4>Resources</h4>
+      <a href="/blog">Blog</a>
+      <a href="/countries">Country Guides</a>
+      <a href="/blog">Resume Tips</a>
+      <a href="/faq">FAQ</a>
+    </div>
+    <div>
+      <h4>Company</h4>
+      <a href="/about">About</a>
+      <a href="/careers">Careers</a>
+      <a href="/press">Press</a>
+      <a href="/contact">Contact</a>
+    </div>
+    <div>
+      <h4>Legal</h4>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/terms">Terms of Use</a>
+      <a href="/cookies">Cookie Policy</a>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <span>© {{ year }} Jobaround. All rights reserved.</span>
+    <span>Made with ambition for global job seekers</span>
+  </div>
+</footer>
+<script src="/static/main.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

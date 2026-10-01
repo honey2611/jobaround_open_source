@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — Jobaround{% endblock %}
+{% block content %}
+<section class="page-hero narrow">
+  <div class="eyebrow"><span class="dot"></span> {{ kicker }}</div>
+  <h1>{{ title }}</h1>
+</section>
+<article class="prose">
+  {% for paragraph in paragraphs %}
+  <p>{{ paragraph }}</p>
+  {% endfor %}
+</article>
+{% endblock %}

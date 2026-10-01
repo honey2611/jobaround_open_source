@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }} — Jobaround{% endblock %}
+{% block content %}
+<section class="page-hero narrow">
+  <div class="eyebrow"><span class="dot"></span> {{ post.date }}</div>
+  <h1>{{ post.title }}</h1>
+  <p>{{ post.excerpt }}</p>
+</section>
+<article class="prose">
+  {% for paragraph in post.paragraphs %}
+  <p>{{ paragraph }}</p>
+  {% endfor %}
+  <a class="btn" href="/tailor">Tailor a resume</a>
+</article>
+{% endblock %}

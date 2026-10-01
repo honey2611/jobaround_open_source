@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Your history — Jobaround{% endblock %}
+{% block content %}
+<section class="page-hero">
+  <div class="eyebrow"><span class="dot"></span> Profile</div>
+  <h1>{{ user.name }}</h1>
+  <p>{{ user.email }} · joined {{ user.created_at }}</p>
+  <div class="cta-row">
+    <a class="btn" href="/tailor">Tailor a resume</a>
+    <form method="post" action="/logout">
+      <input type="hidden" name="csrf" value="{{ csrf_token }}">
+      <button class="btn btn-ghost" type="submit">Sign out</button>
+    </form>
+  </div>
+</section>
+<section class="section tight">
+  {% if history %}
+  <div class="history">
+    {% for item in history %}
+    <article class="card">
+      <div class="result-head">
+        <h3>{{ item.flag }} {{ item.country }}</h3>
+        <small>{{ item.created_at }}</small>
+      </div>
+      <p>{{ item.job_title or "No job title" }}{% if not item.ai_used %} · fallback mode{% endif %}</p>
+      <pre>{{ item.preview[:500] }}</pre>
+      <div class="cta-row">
+        {% if item.pdf_ok %}<a class="btn btn-sm" href="/download/pdf/{{ item.pdf_name }}">PDF</a>{% endif %}
+        {% if item.docx_ok %}<a class="btn btn-ghost btn-sm" href="/download/docx/{{ item.docx_name }}">DOCX</a>{% endif %}
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <article class="card"><p>No tailored resumes yet. Your next upload will show up here.</p></article>
+  {% endif %}
+</section>
+{% endblock %}

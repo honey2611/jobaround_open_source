@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}FAQ — Jobaround{% endblock %}
+{% block content %}
+<section class="page-hero">
+  <div class="eyebrow"><span class="dot"></span> FAQ</div>
+  <h1>Questions, answered</h1>
+</section>
+<section class="section tight">
+  <div class="faq">
+    {% for q, a in faqs %}
+    <details class="card">
+      <summary>{{ q }}</summary>
+      <p>{{ a }}</p>
+    </details>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

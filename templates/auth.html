@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == "signup" %}Create account{% else %}Sign in{% endif %} — Jobaround{% endblock %}
+{% block content %}
+<section class="page-hero narrow">
+  <div class="eyebrow"><span class="dot"></span> Account</div>
+  <h1>{% if mode == "signup" %}Create your account{% else %}Sign in{% endif %}</h1>
+  <p>History is optional. You can tailor a resume without an account.</p>
+</section>
+<section class="tool">
+  <form class="card form-card" method="post">
+    <input type="hidden" name="csrf" value="{{ csrf_token }}">
+    {% if error %}<div class="status error">{{ error }}</div>{% endif %}
+    {% if mode == "signup" %}
+    <label for="name">Name</label>
+    <input id="name" name="name" required>
+    {% endif %}
+    <label for="email">Email</label>
+    <input id="email" name="email" type="email" required>
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" minlength="8" required>
+    <button class="btn full" type="submit">{% if mode == "signup" %}Create account{% else %}Sign in{% endif %}</button>
+    <p class="switch">
+      {% if mode == "signup" %}
+      Already have an account? <a href="/signin">Sign in</a>
+      {% else %}
+      New here? <a href="/signup">Create an account</a>
+      {% endif %}
+    </p>
+  </form>
+</section>
+{% endblock %}

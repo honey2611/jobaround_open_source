@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}How it works — Jobaround{% endblock %}
+{% block content %}
+<section class="page-hero">
+  <div class="eyebrow"><span class="dot"></span> How it works</div>
+  <h1>Three steps to your global career</h1>
+  <p>Upload, choose a country, download. The same flow works if you are signed in or not.</p>
+</section>
+<section class="section tight">
+  <div class="steps">
+    <article class="card"><div class="num">01</div><h3>Upload your resume</h3><p>PDF, DOCX, or TXT up to 8 MB. Text is extracted on the server and the upload is deleted.</p></article>
+    <article class="card"><div class="num">02</div><h3>Choose your country</h3><p>Each of the 50 countries has a formatting note. Add a job title and, if you have it, the job description.</p></article>
+    <article class="card"><div class="num">03</div><h3>Download</h3><p>You get a preview plus PDF and DOCX. Signed-in users also see the file in their history.</p></article>
+  </div>
+  <p class="center"><a class="btn" href="/tailor">Upload Your Resume Now</a></p>
+</section>
+{% endblock %}

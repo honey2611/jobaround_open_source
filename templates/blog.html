@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Blog — Jobaround{% endblock %}
+{% block content %}
+<section class="page-hero">
+  <div class="eyebrow"><span class="dot"></span> Job search tips</div>
+  <h1>Notes for applying abroad</h1>
+  <p>Short guides on format, tracking systems, and what to leave off.</p>
+</section>
+<section class="section tight">
+  <div class="quotes">
+    {% for post in posts %}
+    <a class="card post-card reveal" href="/blog/{{ post.slug }}">
+      <small>{{ post.date }}</small>
+      <h3>{{ post.title }}</h3>
+      <p>{{ post.excerpt }}</p>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

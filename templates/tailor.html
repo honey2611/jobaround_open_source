@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Tailor a resume — Jobaround{% endblock %}
+{% block content %}
+<section class="page-hero">
+  <div class="eyebrow"><span class="dot"></span> Resume tailor</div>
+  <h1>Tailor your resume</h1>
+  <p>PDF, DOCX, or TXT. Pick one of {{ countries|length }} countries. If the AI service is offline, you still get a file built from your original text.</p>
+</section>
+<section class="tool">
+  <form id="resumeForm" class="card form-card">
+    <input type="hidden" name="csrf" value="{{ csrf_token }}">
+    <label for="resume">Resume</label>
+    <label class="dropzone" id="dropzone">
+      <input id="resume" type="file" name="resume" accept=".pdf,.docx,.txt" required>
+      <span id="fileLabel">Drop a PDF, DOCX, or TXT — or click to browse</span>
+    </label>
+    <div class="grid">
+      <div>
+        <label for="country">Target country</label>
+        <select id="country" name="country" required>
+          <option value="">Select country</option>
+          {% for country in countries %}
+          <option value="{{ country.name }}" {% if country.name == selected %}selected{% endif %}>{{ country.flag }} {{ country.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="job_title">Target job title</label>
+        <input id="job_title" name="job_title" placeholder="e.g. Senior DevOps Engineer">
+      </div>
+    </div>
+    <label for="job_description">Job description (optional)</label>
+    <textarea id="job_description" name="job_description" rows="7" placeholder="Paste the job description for a closer match..."></textarea>
+    <button class="btn full" type="submit">Tailor Resume with AI</button>
+  </form>
+  <div id="status" class="status" role="status"></div>
+  <div id="result" class="card result hidden">
+    <div class="result-head">
+      <h3>Your tailored resume</h3>
+      <div>
+        <a id="pdfLink" class="btn btn-sm" target="_blank">Download PDF</a>
+        <a id="docxLink" class="btn btn-ghost btn-sm" target="_blank">Download DOCX</a>
+      </div>
+    </div>
+    <pre id="preview"></pre>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="/static/app.js"></script>{% endblock %}

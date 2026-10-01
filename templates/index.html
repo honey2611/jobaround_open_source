@@ -1,91 +1,141 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Jobaround — Global Resume Tailoring</title>
-  <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-<header class="nav">
-  <div class="brand"><span class="logo">🌐</span> Jobaround</div>
-  <a href="#how">How it works</a>
-  <a href="#tailor" class="navbtn">Tailor My Resume</a>
-</header>
-
-<main>
+{% extends "base.html" %}
+{% block title %}Jobaround — Your Resume. Any Country.{% endblock %}
+{% block content %}
 <section class="hero">
-  <div>
-    <div class="eyebrow">GLOBAL CAREER TOOL</div>
-    <h1>Your Resume.<br><span>Any Country.</span><br>Ready to Apply.</h1>
-    <p>Upload your resume, choose your target country and job role, and Jobaround rewrites it for local hiring conventions.</p>
-    <a href="#tailor" class="primary">Tailor My Resume →</a>
-  </div>
-  <div class="hero-card">
-    <div class="card-top">AI RESUME LOCALIZATION</div>
-    <div class="fake-row"><b>🇺🇸 United States</b><span>ATS Ready</span></div>
-    <div class="fake-row"><b>🇬🇧 United Kingdom</b><span>Localized</span></div>
-    <div class="fake-row"><b>🇩🇪 Germany</b><span>Structured</span></div>
-    <div class="fake-row"><b>🇦🇺 Australia</b><span>Optimized</span></div>
-  </div>
-</section>
-
-<section id="how" class="steps">
-  <div><b>01</b><h3>Upload</h3><p>PDF, DOCX or TXT resume.</p></div>
-  <div><b>02</b><h3>Choose</h3><p>Country and target role.</p></div>
-  <div><b>03</b><h3>Tailor</h3><p>Open-source AI rewrites it.</p></div>
-  <div><b>04</b><h3>Download</h3><p>Get PDF and DOCX.</p></div>
-</section>
-
-<section id="tailor" class="tool">
-  <div class="section-title">
-    <div class="eyebrow">START HERE</div>
-    <h2>Tailor your resume</h2>
-    <p>No OpenAI key required. This version can use a local open-source model through Ollama.</p>
-  </div>
-
-  <form id="resumeForm">
-    <label>Resume</label>
-    <input type="file" name="resume" accept=".pdf,.docx,.txt" required>
-
-    <div class="grid">
-      <div>
-        <label>Target country</label>
-        <select name="country" required>
-          <option value="">Select country</option>
-          {% for country in countries %}
-          <option value="{{ country }}">{{ country }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div>
-        <label>Target job title</label>
-        <input name="job_title" placeholder="e.g. Senior DevOps Engineer">
-      </div>
+  <div class="hero-copy">
+    <div class="eyebrow"><span class="dot"></span> AI-powered resume tailoring</div>
+    <h1>Your Resume. Any Country. Instantly.</h1>
+    <p>Upload your resume, choose your target country, and our AI rewrites it to match local hiring norms — format, tone, and structure included.</p>
+    <div class="cta-row">
+      <a class="btn" href="/tailor">Tailor My Resume</a>
+      <a class="btn btn-ghost" href="#how">See How It Works</a>
     </div>
-
-    <label>Job description (optional)</label>
-    <textarea name="job_description" rows="7" placeholder="Paste the job description here for more targeted tailoring..."></textarea>
-
-    <button class="primary full" type="submit">Tailor Resume with AI →</button>
-  </form>
-
-  <div id="status" class="status"></div>
-
-  <div id="result" class="result hidden">
-    <div class="result-head">
-      <h3>Your tailored resume</h3>
-      <div>
-        <a id="pdfLink" class="download" target="_blank">Download PDF</a>
-        <a id="docxLink" class="download" target="_blank">Download DOCX</a>
-      </div>
+    <div class="stats">
+      <div><b>50+</b><span>Countries</span></div>
+      <div><b>10k+</b><span>Resumes Tailored</span></div>
+      <div><b>3x</b><span>More Interviews</span></div>
     </div>
-    <pre id="preview"></pre>
+  </div>
+  <div class="mock">
+    <div class="mock-top"><i></i><i></i><i></i><em>jobaround.in — Resume Tailor</em></div>
+    <div class="drop">
+      <div class="file-ico">▤</div>
+      <strong>resume_2024.pdf</strong>
+      <span>Uploaded ✓</span>
+    </div>
+    <div class="fake-select"><span>🇩🇪 Germany</span><span>▾</span></div>
+    <div class="progress-label"><span>AI Tailoring...</span><span>87%</span></div>
+    <div class="bar"><span></span></div>
+    <div class="sk"></div><div class="sk short"></div><div class="sk"></div>
+    <a class="btn full" href="/tailor?country=Germany">Download Tailored Resume</a>
   </div>
 </section>
-</main>
 
-<footer>© 2026 Jobaround · Built for global job seekers</footer>
-<script src="/static/app.js"></script>
-</body>
-</html>
+<section id="features" class="section">
+  <div class="section-head reveal">
+    <a class="pill" href="/countries">+38 more countries supported</a>
+    <h2>Built for the global job seeker</h2>
+  </div>
+  <div class="feature-grid">
+    <article class="card feature-main reveal">
+      <span class="tag">Core Feature</span>
+      <h3>AI-Powered Rewriting</h3>
+      <p>Our model understands cultural nuances, not just formatting rules. It rewrites your resume the way a local recruiter would.</p>
+      <div class="pills"><span>AI Powered</span><span>Cultural Context</span><span>Tone Matching</span></div>
+    </article>
+    <article class="card reveal">
+      <h3>Country-Specific Formats</h3>
+      <p>US no-photo, German Lebenslauf, Japanese Rirekisho — every format handled automatically.</p>
+    </article>
+    <article class="card reveal">
+      <div class="ico">✓</div>
+      <h3>ATS Optimized</h3>
+      <p>Passes applicant tracking systems in every market.</p>
+    </article>
+    <article class="card reveal">
+      <div class="ico">↓</div>
+      <h3>Instant Download</h3>
+      <p>PDF and DOCX ready in seconds.</p>
+    </article>
+    <article class="card stat-card reveal">
+      <b>50+</b>
+      <h3>Countries</h3>
+      <p>Fifty country notes, from the United States to Luxembourg.</p>
+    </article>
+  </div>
+</section>
+
+<section id="countries" class="section">
+  <div class="section-head reveal">
+    <h2>Tailored for Every Market</h2>
+    <p>From Silicon Valley to Singapore, we know what hiring managers expect.</p>
+  </div>
+  <div class="chips">
+    {% for country in featured %}
+    <a class="chip reveal" href="/countries/{{ country.slug }}">{{ country.flag }} {{ country.name }}</a>
+    {% endfor %}
+  </div>
+</section>
+
+<section id="how" class="section">
+  <div class="section-head reveal">
+    <h2>Three steps to your global career</h2>
+  </div>
+  <div class="steps">
+    <article class="card reveal">
+      <div class="num">01</div>
+      <h3>Upload Your Resume</h3>
+      <p>Drop your existing resume in PDF or DOCX format. Our AI reads every detail.</p>
+    </article>
+    <article class="card reveal">
+      <div class="num">02</div>
+      <h3>Choose Your Country</h3>
+      <p>Select the country you're applying to. We support 50+ countries with unique hiring norms.</p>
+    </article>
+    <article class="card reveal">
+      <div class="num">03</div>
+      <h3>Download Tailored Resume</h3>
+      <p>Get a perfectly formatted, country-specific resume ready to send in seconds.</p>
+    </article>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-head reveal">
+    <h2>Real people. Real jobs. Real countries.</h2>
+  </div>
+  <div class="quotes">
+    <article class="card reveal">
+      <p>“I had no idea German CVs needed a photo and a different date format. Jobaround fixed everything in 30 seconds. I got the interview.”</p>
+      <div class="who"><span class="avatar">PS</span><div><b>Priya Sharma</b><small>Software Engineer · 🇩🇪 Germany</small></div></div>
+    </article>
+    <article class="card reveal">
+      <p>“The AI understood the tone shift needed for Singapore's market. My response rate went from 5% to 40% after using Jobaround.”</p>
+      <div class="who"><span class="avatar">CM</span><div><b>Carlos Mendez</b><small>Marketing Manager · 🇸🇬 Singapore</small></div></div>
+    </article>
+    <article class="card reveal">
+      <p>“Moving from Nigeria to Canada, I didn't know what recruiters expected. This tool made my resume look like it was written by a local.”</p>
+      <div class="who"><span class="avatar">AO</span><div><b>Aisha Okonkwo</b><small>Data Analyst · 🇨🇦 Canada</small></div></div>
+    </article>
+  </div>
+</section>
+
+<section class="globe-section" aria-hidden="true">
+  <div class="orbit">
+    <span class="flag a">🇺🇸 US</span>
+    <span class="flag b">🇩🇪 DE</span>
+    <span class="flag c">🇯🇵 JP</span>
+    <span class="flag d">🇸🇬 SG</span>
+    <div class="sphere"></div>
+  </div>
+</section>
+
+<section class="cta-band">
+  <div class="reveal">
+    <h2>Ready to Go Global?</h2>
+    <p>Join thousands of job seekers who landed international roles with Jobaround.</p>
+    <a class="btn" href="/tailor">Upload Your Resume Now</a>
+    <small>Free to try · No credit card required · Results in 30 seconds</small>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Countries — Jobaround{% endblock %}
+{% block content %}
+<section class="page-hero">
+  <div class="eyebrow"><span class="dot"></span> Country guides</div>
+  <h1>Tailored for every market</h1>
+  <p>Fifty countries, each with a note on format, photo, and what to leave off. Open a guide, then tailor from there.</p>
+</section>
+<section class="section tight">
+  <div class="country-grid">
+    {% for country in countries %}
+    <a class="card country-link reveal" href="/countries/{{ country.slug }}">
+      <span class="big-flag">{{ country.flag }}</span>
+      <h3>{{ country.name }}</h3>
+      <p>{{ country.note }}</p>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
